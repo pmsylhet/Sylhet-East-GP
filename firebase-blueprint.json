@@ -1,0 +1,141 @@
+{
+  "entities": {
+    "UserSyncProfile": {
+      "title": "UserSyncProfile",
+      "description": "Encrypted cloud sync profile metadata for an authenticated user without storing sensitive PII.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase Auth UID of the profile owner."
+        },
+        "deviceCount": {
+          "type": "integer",
+          "description": "Number of registered Android/web devices syncing to this profile (1..50)."
+        },
+        "activeDeviceId": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Identifier of the most recently synced device."
+        },
+        "keyFingerprint": {
+          "type": "string",
+          "minLength": 16,
+          "maxLength": 128,
+          "pattern": "^[a-fA-F0-9]+$",
+          "description": "SHA-256 fingerprint of the client-side encryption key for verification across devices."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the sync profile was initialized."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of the latest sync profile update."
+        }
+      },
+      "required": ["uid", "deviceCount", "activeDeviceId", "keyFingerprint", "createdAt", "updatedAt"]
+    },
+    "EncryptedSyncRecord": {
+      "title": "EncryptedSyncRecord",
+      "description": "AES-256-GCM encrypted payload synced across user devices (preferences, thresholds, monthly health reports, pinned telecom sites).",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase Auth UID of the record owner."
+        },
+        "deviceId": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Device identifier that produced this encrypted snapshot."
+        },
+        "deviceLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "Human-readable device label (e.g., Pixel 7a - Android 14)."
+        },
+        "androidApiLevel": {
+          "type": "integer",
+          "description": "Android API level (26 = Android 8.0 Oreo minimum up to 36)."
+        },
+        "recordType": {
+          "type": "string",
+          "enum": ["preferences", "monthly_report", "pinned_sites", "telemetry_bundle"],
+          "description": "Category of encrypted payload stored."
+        },
+        "ivBase64": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 48,
+          "description": "Base64-encoded 96-bit AES-GCM initialization vector."
+        },
+        "saltBase64": {
+          "type": "string",
+          "minLength": 16,
+          "maxLength": 64,
+          "description": "Base64-encoded PBKDF2 salt used for key derivation."
+        },
+        "ciphertextBase64": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 100000,
+          "description": "Base64-encoded AES-256-GCM encrypted JSON payload."
+        },
+        "checksumSha256": {
+          "type": "string",
+          "minLength": 64,
+          "maxLength": 64,
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "SHA-256 digest of ciphertext for integrity verification."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the snapshot was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of the latest snapshot sync."
+        }
+      },
+      "required": [
+        "ownerId",
+        "deviceId",
+        "deviceLabel",
+        "androidApiLevel",
+        "recordType",
+        "ivBase64",
+        "saltBase64",
+        "ciphertextBase64",
+        "checksumSha256",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserSyncProfile" },
+      "description": "Stores per-user sync profile metadata keyed by Firebase Auth UID."
+    },
+    "/users/{userId}/encryptedSnapshots/{snapshotId}": {
+      "schema": { "$ref": "#/entities/EncryptedSyncRecord" },
+      "description": "Stores client-side AES-256-GCM encrypted cloud sync snapshots scoped strictly to the owning user."
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "Remix Sylhet East Site Location",
+  "description": "Android 8.0+ battery optimization, real-time background resource alerts, monthly health reports, encrypted cloud sync, and telecom site locator.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
